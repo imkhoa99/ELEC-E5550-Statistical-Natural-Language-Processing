@@ -35,41 +35,35 @@ test_df = pd.read_csv("Corona_NLP_test.csv", encoding='latin-1')
 # In[3]:
 
 
-test_df.shape
-
-
-# In[4]:
-
-
 os.getcwd().replace("\\", "/")
 
 
-# In[5]:
+# In[4]:
 
 
 sa_lexicon = lbsa.get_lexicon("sa", language = "english", source = "nrc", 
                               path = "E:/Aalto/Aalto Master 1st Spring 2022/DSB2/Assignment 4/Lexicon-Based-Sentiment-Analysis/NRC-Emotion-Lexicon/NRC-Emotion-Lexicon-v0.92/NRC-Emotion-Lexicon-v0.92-In105Languages-Nov2017Translations.xlsx")
 
 
-# In[6]:
+# In[5]:
 
 
 sa_lexicon.dataframe
 
 
-# In[7]:
+# In[6]:
 
 
 sa_lexicon.dataframe[["anger", "anticipation", "disgust", "fear", "joy", "sadness", "surprise", "trust"]].sum(axis=0)
 
 
-# In[8]:
+# In[7]:
 
 
 train_df.head()
 
 
-# In[9]:
+# In[8]:
 
 
 import seaborn as sns
@@ -83,7 +77,7 @@ target_dist = sns.catplot(x='Sentiment', data=train_df, kind="count", height=6, 
 plt.show()
 
 
-# In[10]:
+# In[9]:
 
 
 import seaborn as sns
@@ -97,7 +91,7 @@ target_dist = sns.catplot(x='Sentiment', data=test_df, kind="count", height=6, a
 plt.show()
 
 
-# In[11]:
+# In[10]:
 
 
 palette=sns.color_palette('magma')
@@ -109,13 +103,13 @@ countries.set_xticklabels(countries.get_xticklabels(), rotation=45)
 plt.show() 
 
 
-# In[12]:
+# In[11]:
 
 
 train_df.head()
 
 
-# In[13]:
+# In[12]:
 
 
 '''
@@ -135,7 +129,7 @@ for label, cmap in zip(['Positive', 'Negative', 'Neutral', 'Extremely Positive',
 
 # ## a) Extract lexicon-based features. Describe whether there is any lexicon-based feature that has some level of relation to the sentiment. Explain your reasoning.
 
-# In[14]:
+# In[13]:
 
 
 afinn_lexicon = lbsa.get_lexicon('opinion', language='english', source='afinn')
@@ -150,14 +144,14 @@ feat_dat_test = pd.DataFrame(sa_extractor.process(test_df['OriginalTweet']),colu
 
 # ## Apply Data Preprocessing onto also the test_df 
 
-# In[15]:
+# In[14]:
 
 
 train_df["Sentiment"] = train_df["Sentiment"].map({'Extremely Negative':"Negative",'Negative':"Negative",'Neutral':"Neutral",'Positive':"Positive",'Extremely Positive': "Positive"})
 test_df["Sentiment"] = test_df["Sentiment"].map({'Extremely Negative':"Negative",'Negative':"Negative",'Neutral':"Neutral",'Positive':"Positive",'Extremely Positive': "Positive"})
 
 
-# In[16]:
+# In[15]:
 
 
 def show_dist(df, col):
@@ -171,11 +165,6 @@ def show_dist(df, col):
 
 df_eda_train = pd.concat([train_df,feat_dat_train],axis=1)
 df_eda_test = pd.concat([test_df,feat_dat_test],axis=1)
-
-'''
-for feature in sa_extractor.feature_names:
-    show_dist(df_eda, feature)
-'''
 
 
 # ## b) Clean the text. Describe each step that you went through and explain why those steps are needed. (Perform at least 5 steps)
@@ -191,7 +180,7 @@ for feature in sa_extractor.feature_names:
 # - apply stemming (e.g., PorterStemmer) or lemmatization
 # (https://nlp.stanford.edu/IR-book/html/htmledition/stemming-and-lemmatization-1.html)
 
-# In[17]:
+# In[16]:
 
 
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -248,7 +237,7 @@ class CleanText(BaseEstimator, TransformerMixin):
         return clean_X
 
 
-# In[18]:
+# In[17]:
 
 
 ct = CleanText()
@@ -259,7 +248,7 @@ print('{} records have no words left after text cleaning'.format(sent_clean[empt
 sent_clean.loc[empty_clean] = '[no_text]'
 
 
-# In[19]:
+# In[18]:
 
 
 sent_clean_test = ct.transform(test_df.OriginalTweet)
@@ -270,7 +259,7 @@ sent_clean_test.loc[empty_clean_test] = '[no_text]'
 
 # ## c) Create BOW representation of the data. Identify the most common words and visualize. Discuss whether the result is reasonable.
 
-# In[20]:
+# In[19]:
 
 
 from sklearn.feature_extraction.text import CountVectorizer
@@ -290,12 +279,6 @@ plt.show();
 # In[21]:
 
 
-#sent_clean
-
-
-# In[22]:
-
-
 df_model = df_eda_train
 df_model['clean_text'] = sent_clean
 #df_model.columns.tolist()
@@ -304,10 +287,17 @@ df_model['clean_text'] = sent_clean
 # In[23]:
 
 
+for feature in sa_extractor.feature_names:
+    show_dist(df_eda_train, feature)
+
+
+# In[22]:
+
+
 test_df["clean_text"] = sent_clean_test
 
 
-# In[24]:
+# In[23]:
 
 
 class ColumnExtractor(TransformerMixin, BaseEstimator):
@@ -321,14 +311,14 @@ class ColumnExtractor(TransformerMixin, BaseEstimator):
         return self
 
 
-# In[25]:
+# In[24]:
 
 
 from sklearn.model_selection import train_test_split
 X_train, X_valid, y_train, y_valid = train_test_split(df_model.drop('Sentiment', axis=1), df_model.Sentiment, test_size=0.1, random_state=30)
 
 
-# In[26]:
+# In[25]:
 
 
 from sklearn.pipeline import Pipeline, FeatureUnion
@@ -348,7 +338,7 @@ countvect = CountVectorizer()
 # - TF-IDF
 # - Word embedding: 
 
-# In[27]:
+# In[26]:
 
 
 print("First sentence:", df_model.head(3).OriginalTweet[1])
@@ -356,14 +346,14 @@ print()
 print("Second sentence:", df_model.head(3).OriginalTweet[2])
 
 
-# In[28]:
+# In[27]:
 
 
 corpus = df_model.head(3).clean_text.tolist()
 corpus
 
 
-# In[29]:
+# In[28]:
 
 
 first = df_model.head(3).clean_text.tolist()[1]
@@ -390,7 +380,7 @@ for word in second:
 pd.DataFrame([wordDictA, wordDictB])
 
 
-# In[30]:
+# In[29]:
 
 
 #Now writing the TF function:
@@ -409,7 +399,7 @@ tf_df= pd.DataFrame([tfFirst, tfSecond])
 tf_df
 
 
-# In[32]:
+# In[30]:
 
 
 #creating the log portion of the Excel table we saw earlier
@@ -444,7 +434,7 @@ idf= pd.DataFrame([idfFirst, idfSecond])
 
 # ## e) Train classifiers. Describe the process in two sections, one for the methods and the other for the results.
 
-# In[33]:
+# In[31]:
 
 
 from pprint import pprint
@@ -504,7 +494,7 @@ def grid_vect(clf, parameters_clf, X_train, X_test, y_train, y_test, parameters_
     return grid_search
 
 
-# In[34]:
+# In[32]:
 
 
 # Parameter grid settings for the vectorizers (Count and TFIDF)
@@ -526,29 +516,66 @@ parameters_mnb = {
 }
 
 
-# In[35]:
+# In[33]:
 
 
 y_train.value_counts()
 
 
-# In[36]:
+# In[34]:
 
 
 y_valid.value_counts()
 
 
-# In[37]:
+# In[41]:
+
+
+textcountscols = ['afinn_positive', 'afinn_negative', 'nrc_positive', 'nrc_negative', 'nrc_anger', 'nrc_anticipation', 'nrc_disgust',
+                     'nrc_fear', 'nrc_joy', 'nrc_sadness', 'nrc_surprise', 'nrc_trust', 'mpqa_positive', 'mpqa_negative', 'mpqa_strong_subjectivty']
+    
+features = FeatureUnion([('textcounts', ColumnExtractor(cols=textcountscols))
+                             , ('pipe', Pipeline([('cleantext', ColumnExtractor(cols='clean_text')), ('vect', countvect)]))]
+                            , n_jobs=-1)
+
+pipeline = Pipeline([
+    ('features', features)
+    , ('clf', logreg)
+])
+
+
+# In[42]:
+
+
+pipeline.fit(X_train, y_train)
+y_test_pred = pipeline.predict(X_valid)
+print(classification_report(y_valid, y_test_pred))
+
+
+# In[47]:
+
+
+pipeline_naive = Pipeline([
+    ('features', features)
+    , ('clf', mnb)
+])
+pipeline_naive.fit(X_train, y_train)
+
+y_test_pred = pipeline_naive.predict(X_valid)
+print(classification_report(y_valid, y_test_pred))
+
+
+# In[ ]:
 
 
 # LogisticRegression
 best_logreg_countvect = grid_vect(logreg, parameters_logreg, X_train, X_valid, y_train, y_valid, parameters_text=parameters_vect, vect=countvect)
 
 
-# In[39]:
+# In[ ]:
 
 
-mnb = MultinomialNB()
+smnb = MultinomialNB()
 countvect = CountVectorizer()
 
 # MultinomialNB
@@ -732,63 +759,6 @@ def create_model(bert_model, max_len=MAX_LEN):
     
     return model
 
-
-# ## With balanced data
-
-# In[ ]:
-
-
-model_bal = create_model(bert_model, MAX_LEN)
-model_bal.summary()
-
-
-# In[62]:
-
-
-history_bert = model_bal.fit([train_input_ids,train_attention_masks], y_train, validation_data=([val_input_ids,val_attention_masks], y_valid), epochs=5, batch_size=16)
-
-
-# In[64]:
-
-
-result_bert = model_bal.predict([test_input_ids,test_attention_masks])
-
-
-# In[65]:
-
-
-y_pred_bert =  np.zeros_like(result_bert)
-y_pred_bert[np.arange(len(y_pred_bert)), result_bert.argmax(1)] = 1
-
-
-# In[66]:
-
-
-def conf_matrix(y, y_pred, title):
-    fig, ax =plt.subplots(figsize=(5,5))
-    labels=['Negative', 'Neutral', 'Positive']
-    ax=sns.heatmap(confusion_matrix(y, y_pred), annot=True, cmap="Blues", fmt='g', cbar=False, annot_kws={"size":25})
-    plt.title(title, fontsize=20)
-    ax.xaxis.set_ticklabels(labels, fontsize=17) 
-    ax.yaxis.set_ticklabels(labels, fontsize=17)
-    ax.set_ylabel('Test', fontsize=20)
-    ax.set_xlabel('Predicted', fontsize=20)
-    plt.show()
-
-
-# In[67]:
-
-
-conf_matrix(y_test.argmax(1), y_pred_bert.argmax(1),'BERT Sentiment Analysis\nConfusion Matrix')
-
-
-# In[68]:
-
-
-print('\tClassification Report for BERT:\n\n',classification_report(y_test,y_pred_bert, target_names=['Negative', 'Neutral', 'Positive']))
-
-
-# ## With imbalanced data
 
 # In[54]:
 
